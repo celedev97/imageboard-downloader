@@ -37,25 +37,25 @@ export default class App extends Vue {
   selectedTabId = '0'
   tabs = [] as Tab[]
 
-  created () {
+  created (): void {
     this.addTab()
   }
 
-  handleTabsEdit (targetName: string, action: string) {
+  handleTabsEdit (targetName: string, action: string): void {
     if (action === 'add') {
       this.addTab()
     } else if (action === 'remove') {
       this.removeTab(targetName)
     }
   }
-  addTab (component = Sankaku) {
+  addTab (component = Sankaku): void {
     this.tabs.push({
       id: String(this.tabs.length + 1),
-      component: Sankaku
+      component: component
     })
     this.selectedTabId = String(this.tabs.length)
   }
-  removeTab (targetID: string) {
+  removeTab (targetID: string): void {
     let tabs = this.tabs
 
     if (tabs.length <= 1) return

@@ -79,7 +79,12 @@ export default class Sankaku extends Vue {
 
     // finding posts
     SankakuApi.getPosts(query).then(posts =>
-      SankakuApi.downloadPosts(BrowserWindow.getFocusedWindow() as Electron.BrowserWindow, posts, this.downloadFolder, this.updateTaskDownloadStatus, this.updateFileDownloadStatus)
+      SankakuApi.downloadPosts(posts, {
+        folder: this.downloadFolder, 
+        inDownloadDelay: 1000, 
+        fileProgressCallback: this.updateFileDownloadStatus,
+        taskProgressCallback: this.updateTaskDownloadStatus,
+      })
     ).catch((reason:any) =>
       console.log(reason)
     )

@@ -1,7 +1,7 @@
 import axiosOriginal from 'axios'
 import { downloadFile } from '@/helpers/requestHelper'
 
-// #region Data Definitions
+// #region Sankaku API Data Definitions
 export interface Meta {
   next: string;
   prev?: string;
@@ -100,6 +100,13 @@ const axios = axiosOriginal.create({
   }
 })
 
+export interface downloadOptions{
+  folder: string
+  inDownloadDelay?: number
+  taskProgressCallback?: ((downloaded_files: number, total_files: number) => void)
+  fileProgressCallback?: ((received_bytes: number, total_bytes: number) => void)
+}
+
 export default {
 
   autoSuggest (queryString: string): Promise<Suggestion[]> {
@@ -157,16 +164,16 @@ export default {
     })
   },
 
-  downloadPosts (window: Electron.BrowserWindow ,posts: Post[], folder: string, taskProgressCallback: ((downloaded_files: number, total_files: number) => void) | null = null, fileProgressCallback: ((received_bytes: number, total_bytes: number) => void) | null = null): void {
+  async downloadPosts (posts: Post[], options: downloadOptions): Promise<void> {
     const total = posts.length
-    posts.forEach( (post, index) => {
+    const validPosts = posts.filter((post) => post.file_url)
+    for (let index = 0; index < validPosts.length; index++) {
       console.log("downloading")
-      console.log(post)
-      downloadFile(post.file_url, folder, fileProgressCallback)
-      if(taskProgressCallback != null){
-        taskProgressCallback(index+1, total)
-      }
-    })
+      console.log(validPosts[index])
+      await downloadFile(validPosts[index].file_url, options.folder, options.fileProgressCallback)
+      if(options.taskProgressCallback) options.taskProgressCallback(index+1, total)
+      if(options.inDownloadDelay) await new Promise(resolve => setTimeout(resolve, options.inDownloadDelay));
+    }
   },
 
 }
