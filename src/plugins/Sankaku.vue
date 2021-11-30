@@ -1,5 +1,5 @@
 <template>
-  <el-form @submit.prevent label-position="top">
+  <el-form @submit.prevent label-position="top" :disabled="!downloadEnabled">
 
     <el-form-item label="Tags:" ref="queryInput">
       <el-autocomplete v-model="query"
@@ -13,12 +13,16 @@
     <el-form-item label="Download Folder:">
       <div style="display: flex">
         <el-input v-model="downloadFolder"></el-input>
-        <el-button style="margin-left: 15px" type="primary" @click="selectDir">Browse <el-icon class="el-icon--right"><icon-view /></el-icon></el-button>
+        <el-button style="margin-left: 15px" type="primary" @click="selectDir">
+          Browse
+        </el-button>
       </div>
     </el-form-item>
 
     <el-form-item>
-      <el-button type="primary" @click="download">Download <el-icon class="el-icon--right"><icon-view /></el-icon></el-button>
+      <el-button type="primary" @click="download">
+        Download
+      </el-button>
     </el-form-item>
 
     <el-progress :percentage="fileProgress" />
@@ -48,12 +52,7 @@ export default class Sankaku extends Vue {
   fileProgress = 0
   taskProgress = 0
 
-  uuid = ''
-
-  mounted(): void {
-    this.uuid = (global_uuid++).toString();
-  }
-  
+  downloadEnabled = true; 
 
   // region AutoSuggest
   // this get called each time the text get changed
@@ -74,8 +73,15 @@ export default class Sankaku extends Vue {
   }
 
   download (): void {
+    this.downloadEnabled = false
+
     let query = this.query.trim()
-    if (query.length === 0) return
+    if (query.length === 0) {
+      this.downloadEnabled = true
+      return
+    }
+
+    //TODO: add a check for the downloadFolder, it should be confirmed that it's really a folder
 
     // finding posts
     SankakuApi.getPosts(query).then(posts =>
@@ -84,10 +90,18 @@ export default class Sankaku extends Vue {
         inDownloadDelay: 1000, 
         fileProgressCallback: this.updateFileDownloadStatus,
         taskProgressCallback: this.updateTaskDownloadStatus,
+      }).then( () =>{
+        this.downloadEnabled = true
+      }).catch((reason:any) =>{
+        //TODO: communicate the error to the user
+        console.log(reason)
+        this.downloadEnabled = true; 
       })
-    ).catch((reason:any) =>
+    ).catch((reason:any) =>{
+      //TODO: communicate the error to the user
       console.log(reason)
-    )
+      this.downloadEnabled = true; 
+    })
     // downloading posts
   }
 

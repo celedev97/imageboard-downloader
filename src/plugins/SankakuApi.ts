@@ -162,8 +162,6 @@ export default {
     posts = posts.filter((post) => post.file_url)
     const total = posts.length
     for (let index = 0; index < total; index++) {
-      console.log("downloading")
-      console.log(posts[index])
       await downloadFile(posts[index].file_url, options.folder, options.fileProgressCallback)
       if(options.taskProgressCallback) options.taskProgressCallback(index+1, total)
       if(options.inDownloadDelay) await new Promise(resolve => setTimeout(resolve, options.inDownloadDelay));
