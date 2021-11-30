@@ -1,5 +1,4 @@
-import axiosOriginal from 'axios'
-import { downloadFile } from '@/helpers/requestHelper'
+import { downloadFile, downloadJSON } from '@/helpers/requestHelper'
 
 // #region Sankaku API Data Definitions
 export interface Meta {
@@ -74,7 +73,7 @@ export interface Post {
   tags: Tag[];
 }
 
-export interface SankakuPostRequest {
+export interface SankakuSearchResult {
   meta: Meta;
   data: Post[];
 }
@@ -92,13 +91,6 @@ export interface Suggestion {
 }
 // #endregion
 
-const axios = axiosOriginal.create({
-  baseURL: 'https://capi-v2.sankakucomplex.com/',
-  // timeout: 5000,
-  headers: {
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Mobile Safari/537.36'
-  }
-})
 
 export interface downloadOptions{
   folder: string
@@ -106,6 +98,8 @@ export interface downloadOptions{
   taskProgressCallback?: ((downloaded_files: number, total_files: number) => void)
   fileProgressCallback?: ((received_bytes: number, total_bytes: number) => void)
 }
+
+const API = 'https://capi-v2.sankakucomplex.com/'
 
 export default {
 
@@ -120,8 +114,8 @@ export default {
         resolve(empty)
         return
       }
-      axios.get<Suggestion[]>(`tags/autosuggestCreating?&tag=${search}`).then(response => {
-        console.log(response.data)
+      downloadJSON<Suggestion[]>(`${API}tags/autosuggestCreating?&tag=${search}`).then(suggestions => {
+        console.log(suggestions)
 
         //finding the old query without the new suggested part
         const tags = queryString.split(' ')
@@ -129,11 +123,11 @@ export default {
         const partialQuery = tags.join(' ')
 
         //adding the full query to the suggestions (necessary for the autocomplete)
-        response.data.forEach(element => {
+        suggestions.forEach(element => {
           element.fullQuery = `${partialQuery} ${element.name} `.trimStart()
         })
 
-        resolve(response.data)
+        resolve(suggestions)
       }).catch(reason => reject(reason))
     })
   },
@@ -144,9 +138,9 @@ export default {
     return new Promise(function (resolve, reject) {
       const posts: Post[] = [];
 
-      axios.get<SankakuPostRequest>(`posts/keyset?limit=100&tags=${encodeURIComponent(query)}&next=${next}`).then(response => {
-        const meta = response.data.meta
-        const newPosts = response.data.data
+      downloadJSON<SankakuSearchResult>(`${API}posts/keyset?limit=100&tags=${encodeURIComponent(query)}&next=${next}`).then(result => {
+        const meta = result.meta
+        const newPosts = result.data
         console.log()
         posts.push(...newPosts)
         // recursive approach, if there's a next page i call the function again
@@ -165,12 +159,12 @@ export default {
   },
 
   async downloadPosts (posts: Post[], options: downloadOptions): Promise<void> {
+    posts = posts.filter((post) => post.file_url)
     const total = posts.length
-    const validPosts = posts.filter((post) => post.file_url)
-    for (let index = 0; index < validPosts.length; index++) {
+    for (let index = 0; index < total; index++) {
       console.log("downloading")
-      console.log(validPosts[index])
-      await downloadFile(validPosts[index].file_url, options.folder, options.fileProgressCallback)
+      console.log(posts[index])
+      await downloadFile(posts[index].file_url, options.folder, options.fileProgressCallback)
       if(options.taskProgressCallback) options.taskProgressCallback(index+1, total)
       if(options.inDownloadDelay) await new Promise(resolve => setTimeout(resolve, options.inDownloadDelay));
     }
