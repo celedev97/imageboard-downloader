@@ -30,6 +30,11 @@ async function createWindow() {
     }
   })
 
+  win.on('close', function(e) { 
+    e.preventDefault();
+    (win as BrowserWindow).destroy();
+  });
+
   electronRemote.enable(win.webContents)
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
