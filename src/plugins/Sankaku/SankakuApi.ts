@@ -105,16 +105,19 @@ export default {
 
   autoSuggest (queryString: string): Promise<Suggestion[]> {
     return new Promise(function (resolve, reject) {
+      // pulizia stringa
       let search = queryString.split(' ').pop()
       if (search === undefined) search = ''
-      console.log(`asked for: '${search}'`)
+      
+      console.log(`asking for {${search}}:`)
+
+      //scelta della query da usare (completamento/correlati)
+      let apiCall = `${API}tags/autosuggestCreating?&tag=${search}`
       if (search.trim().length === 0) {
-        // TODO: in questo caso controlla i tag correlati agli ultimi tags?lang=en&related=dross+traps
-        const empty: Suggestion[] = []
-        resolve(empty)
-        return
+        apiCall = `${API}tags?lang=en&related=${encodeURIComponent(queryString)}`
       }
-      downloadJSON<Suggestion[]>(`${API}tags/autosuggestCreating?&tag=${search}`).then(suggestions => {
+
+      downloadJSON<Suggestion[]>(apiCall).then(suggestions => {
         console.log(suggestions)
 
         //finding the old query without the new suggested part
