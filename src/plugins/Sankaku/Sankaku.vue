@@ -2,8 +2,7 @@
   <el-form @submit.prevent label-position="top" :disabled="!downloadEnabled">
 
     <el-form-item label="Tags:" ref="queryInput">
-      <el-autocomplete v-model="query"
-                       placeholder="Search"
+      <el-autocomplete v-model="query" placeholder="Search"
                        value-key="name"
                        :fetch-suggestions="getSuggestions"
                        @select="selectSuggestion"
@@ -18,8 +17,7 @@
       </el-button>
     </el-form-item>
 
-    <el-progress :percentage="fileProgress" />
-    <el-progress :percentage="taskProgress" />
+    <progress-component ref="progress" />
 
   </el-form>
 </template>
@@ -28,28 +26,29 @@
 import SankakuApi, { Suggestion } from './SankakuApi'
 
 
-import { dialog } from '@electron/remote'
 import { Options, Vue } from 'vue-class-component'
 
 import FolderSelect from '@/components/FolderSelect.vue'
+import ProgressComponent from '@/components/ProgressComponent.vue'
 
 
 @Options({
   name: "Sankaku",
   components: {
-    FolderSelect
+    FolderSelect,
+    ProgressComponent
   }
 })
 export default class Sankaku extends Vue {
   query = ''
   downloadFolder = ''
-
-  fileProgress = 0
-  taskProgress = 0
-
   downloadEnabled = true; 
 
-  // region AutoSuggest
+  get progress(): ProgressComponent{
+    return (this.$refs.progress as ProgressComponent)
+  }
+
+  // #region AutoSuggest
   // this get called each time the text get changed
   getSuggestions (_: string, callback: (suggestions: Suggestion[]) => void): void {
     SankakuApi.autoSuggest(this.query).then((suggestions) => callback(suggestions))
@@ -59,9 +58,9 @@ export default class Sankaku extends Vue {
     this.query = item.fullQuery as string
     (this.$refs.queryInput as any).$el.getElementsByTagName('input')[0].focus();
   }
-  // endregion
+  // #endregion
 
-  download (): void {
+  async download (): Promise<void> {
     this.downloadEnabled = false
 
     let query = this.query.trim()
@@ -72,34 +71,31 @@ export default class Sankaku extends Vue {
 
     //TODO: add a check for the downloadFolder, it should be confirmed that it's really a folder
 
-    // finding posts
-    SankakuApi.getPosts(query).then(posts =>
-      SankakuApi.downloadPosts(posts, {
+    try {
+      // finding posts
+      const posts = await SankakuApi.getPosts(query, posts => this.progress.totalFiles = posts )
+    
+      //downloading posts
+      await SankakuApi.downloadPosts(posts, {
         folder: this.downloadFolder, 
-        inDownloadDelay: 1000, 
-        fileProgressCallback: this.updateFileDownloadStatus,
-        taskProgressCallback: this.updateTaskDownloadStatus,
-      }).then( () =>{
-        this.downloadEnabled = true
-      }).catch((reason) =>{
-        //TODO: communicate the error to the user
-        console.log(reason)
-        this.downloadEnabled = true; 
+        inDownloadDelay: 500, 
+        fileProgressCallback: (downloaded, total) => {
+          this.progress.downloadedBytes = downloaded;
+          this.progress.totalBytes = total;
+        },
+        taskProgressCallback: (downloaded, total) => {
+          this.progress.downloadedFiles = downloaded;
+          this.progress.totalFiles = total
+        }
       })
-    ).catch((reason) =>{
+      this.downloadEnabled = true
+
+    } catch (error) {
       //TODO: communicate the error to the user
-      console.log(reason)
-      this.downloadEnabled = true; 
-    })
-    // downloading posts
-  }
-
-  updateFileDownloadStatus(downloaded: number, total: number) : void{
-    this.fileProgress = Math.trunc(downloaded * 100 / total)
-  }
-
-  updateTaskDownloadStatus(downloaded: number, total: number) : void{
-    this.taskProgress = Math.trunc(downloaded * 100 / total)
+      console.log(error)
+      this.downloadEnabled = true
+      return 
+    }
   }
 
 }
