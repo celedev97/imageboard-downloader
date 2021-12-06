@@ -135,30 +135,25 @@ export default {
     })
   },
 
-  getPosts (query: string , next = ''): Promise<Post[]> {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const api = this
-    return new Promise(function (resolve, reject) {
-      const posts: Post[] = [];
+  async getPosts (query: string, callback: ((posts:number) => void) | null = null): Promise<Post[]> {
+    let metaNext = ''
+    const posts: Post[] = []
+    
+    do{
+      //doing the query
+      const result = await downloadJSON<SankakuSearchResult>(
+        `${API}posts/keyset?limit=100&tags=${encodeURIComponent(query)}&next=${metaNext}`
+      ).catch(e => { throw e })
 
-      downloadJSON<SankakuSearchResult>(`${API}posts/keyset?limit=100&tags=${encodeURIComponent(query)}&next=${next}`).then(result => {
-        const meta = result.meta
-        const newPosts = result.data
-        console.log()
-        posts.push(...newPosts)
-        // recursive approach, if there's a next page i call the function again
-        if (meta.next != null) {
-          api.getPosts(query, meta.next).then(
-              nextPosts => {
-                posts.push(...nextPosts)
-                resolve(posts)
-              }
-          )
-        } else {
-          resolve(posts)
-        }
-      }).catch(reason => reject(reason))
-    })
+      //extracting the data from the result
+      metaNext = result.meta.next
+      posts.push(...result.data)
+
+      //calling the callback
+      if(callback) callback(posts.length)
+    }while(metaNext != null);
+
+    return posts
   },
 
   async downloadPosts (posts: Post[], options: downloadOptions): Promise<void> {
