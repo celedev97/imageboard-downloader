@@ -24,7 +24,7 @@
 <script lang="ts">
 import { Component } from 'vue'
 import { Vue } from 'vue-class-component'
-import Sankaku from './plugins/Sankaku.vue'
+import Sankaku from './plugins/Sankaku/Sankaku.vue'
 
 
 interface Tab {

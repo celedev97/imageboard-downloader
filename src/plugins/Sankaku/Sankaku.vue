@@ -10,14 +10,7 @@
       ></el-autocomplete>
     </el-form-item>
 
-    <el-form-item label="Download Folder:">
-      <div style="display: flex">
-        <el-input v-model="downloadFolder"></el-input>
-        <el-button style="margin-left: 15px" type="primary" @click="selectDir">
-          Browse
-        </el-button>
-      </div>
-    </el-form-item>
+    <folder-select v-model="downloadFolder"></folder-select>
 
     <el-form-item>
       <el-button type="primary" @click="download">
@@ -34,18 +27,20 @@
 <script lang="ts">
 import SankakuApi, { Suggestion } from './SankakuApi'
 
-import Electron from 'electron'
 
-import { BrowserWindow, dialog } from '@electron/remote'
+import { dialog } from '@electron/remote'
 import { Options, Vue } from 'vue-class-component'
 
-let global_uuid = 0;
+import FolderSelect from '@/components/FolderSelect.vue'
+
 
 @Options({
-  name: "Sankaku"
+  name: "Sankaku",
+  components: {
+    FolderSelect
+  }
 })
 export default class Sankaku extends Vue {
-  name = 'Sankaku'
   query = ''
   downloadFolder = ''
 
@@ -65,12 +60,6 @@ export default class Sankaku extends Vue {
     (this.$refs.queryInput as any).$el.getElementsByTagName('input')[0].focus();
   }
   // endregion
-
-  selectDir(): void {
-    dialog.showOpenDialog({properties: ['openDirectory']}).then( response =>{
-      if(!response.canceled) this.downloadFolder = response.filePaths[0]
-    });
-  }
 
   download (): void {
     this.downloadEnabled = false
@@ -92,12 +81,12 @@ export default class Sankaku extends Vue {
         taskProgressCallback: this.updateTaskDownloadStatus,
       }).then( () =>{
         this.downloadEnabled = true
-      }).catch((reason:any) =>{
+      }).catch((reason) =>{
         //TODO: communicate the error to the user
         console.log(reason)
         this.downloadEnabled = true; 
       })
-    ).catch((reason:any) =>{
+    ).catch((reason) =>{
       //TODO: communicate the error to the user
       console.log(reason)
       this.downloadEnabled = true; 

@@ -52,9 +52,9 @@ If you think you've found a bug open an issue, if you have wrote some code fixin
 
 ## Authors
 
-  - **Celeste Capece** - *Provided README Template* -
+  - **Celeste Capece** - *Wrote the app* -
     [celedev97](https://github.com/celedev97)
 
 See also the list of
-[contributors](https://github.com/PurpleBooth/a-good-readme-template/contributors)
+[contributors](https://github.com/celedev97/hentai-downloader/contributors)
 who participated in this project.
