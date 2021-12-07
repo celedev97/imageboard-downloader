@@ -26,6 +26,8 @@
 import SankakuApi, { Suggestion } from './SankakuApi'
 
 
+import fs from 'fs'
+
 import { Options, Vue } from 'vue-class-component'
 
 import FolderSelect from '@/components/FolderSelect.vue'
@@ -61,16 +63,23 @@ export default class Sankaku extends Vue {
   // #endregion
 
   async download (): Promise<void> {
-    this.downloadEnabled = false
+    this.progress.clear()
 
     let query = this.query.trim()
+
+    //skipping if query is empty
     if (query.length === 0) {
-      this.downloadEnabled = true
+      this.progress.errors.push("The query is empty")
       return
     }
 
-    //TODO: add a check for the downloadFolder, it should be confirmed that it's really a folder
+    //checking if the folder exists
+    if(!fs.existsSync(this.downloadFolder)){
+      this.progress.errors.push("The selected download folder does not exists")
+      return
+    }
 
+    this.downloadEnabled = false
     try {
       // finding posts
       const posts = await SankakuApi.getPosts(query, posts => this.progress.totalFiles = posts )
@@ -88,14 +97,12 @@ export default class Sankaku extends Vue {
           this.progress.totalFiles = total
         }
       })
-      this.downloadEnabled = true
+      this.progress.success = "Files downloaded."
 
     } catch (error) {
-      //TODO: communicate the error to the user
-      console.log(error)
-      this.downloadEnabled = true
-      return 
+      this.progress.errors.push(error as string)
     }
+    this.downloadEnabled = true
   }
 
 }
