@@ -17,8 +17,8 @@ let electronRemote: any  = null
 async function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: isDevelopment ? 1200 : 750,
+    height: 750,
     autoHideMenuBar: true,
     webPreferences: {
       
