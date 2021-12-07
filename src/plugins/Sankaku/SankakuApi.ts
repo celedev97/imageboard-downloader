@@ -103,36 +103,41 @@ const API = 'https://capi-v2.sankakucomplex.com/'
 
 export default {
 
-  autoSuggest (queryString: string): Promise<Suggestion[]> {
-    return new Promise(function (resolve, reject) {
-      // pulizia stringa
-      let search = queryString.split(' ').pop()
-      if (search === undefined) search = ''
-      
-      console.log(`asking for {${search}}:`)
+  async autoSuggest (queryString: string): Promise<Suggestion[]> {
+    // #region cleaning the query
 
-      //scelta della query da usare (completamento/correlati)
-      let apiCall = `${API}tags/autosuggestCreating?&tag=${search}`
-      if (search.trim().length === 0) {
-        apiCall = `${API}tags?lang=en&related=${encodeURIComponent(queryString)}`
-      }
+    // autocomplete part
+    let search = queryString.split(' ').pop()
+    if (search === undefined) search = ''
 
-      downloadJSON<Suggestion[]>(apiCall).then(suggestions => {
-        console.log(suggestions)
+    // finding the old query without the new searched part
+    const tags = queryString.split(' ')
+    tags.pop()
+    const partialQuery = tags.join(' ')
 
-        //finding the old query without the new suggested part
-        const tags = queryString.split(' ')
-        tags.pop()
-        const partialQuery = tags.join(' ')
+    // #endregion
+    
+    let apiCall = ''
+    // #region choosing the query to use (suggest/related)
+    if (search.trim().length === 0) {
+      apiCall = `${API}tags?lang=en&related=${encodeURIComponent(queryString)}`
+    }else{
+      apiCall = `${API}tags/autosuggestCreating?&tag=${search}`
+    }
+    // #endregion
 
-        //adding the full query to the suggestions (necessary for the autocomplete)
-        suggestions.forEach(element => {
-          element.fullQuery = `${partialQuery} ${element.name} `.trimStart()
-        })
+    // executing the query
+    const suggestions = await downloadJSON<Suggestion[]>(apiCall).catch(e => { throw e })
 
-        resolve(suggestions)
-      }).catch(reason => reject(reason))
+    console.log(`asking for {${search}}:`)
+    console.log(suggestions)
+
+    // adding the full query to the suggestions (necessary for the autocomplete)
+    suggestions.forEach(element => {
+      element.fullQuery = `${partialQuery} ${element.name} `.trimStart()
     })
+
+    return suggestions
   },
 
   async getPosts (query: string, callback: ((posts:number) => void) | null = null): Promise<Post[]> {
