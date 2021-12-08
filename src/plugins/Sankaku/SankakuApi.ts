@@ -1,4 +1,4 @@
-import { downloadFile, downloadJSON } from '@/helpers/requestHelper'
+import { downloadFile, downloadJSON, DownloadOptions } from '@/helpers/requestHelper'
 
 // #region Sankaku API Data Definitions
 export interface Meta {
@@ -92,13 +92,6 @@ export interface Suggestion {
 // #endregion
 
 
-export interface downloadOptions{
-  folder: string
-  inDownloadDelay?: number
-  taskProgressCallback?: ((downloaded_files: number, total_files: number) => void)
-  fileProgressCallback?: ((received_bytes: number, total_bytes: number) => void)
-}
-
 const API = 'https://capi-v2.sankakucomplex.com/'
 
 export default {
@@ -161,13 +154,12 @@ export default {
     return posts
   },
 
-  async downloadPosts (posts: Post[], options: downloadOptions): Promise<void> {
+  async downloadPosts (posts: Post[], options: DownloadOptions): Promise<void> {
     posts = posts.filter((post) => post.file_url)
     const total = posts.length
     for (let index = 0; index < total; index++) {
-      await downloadFile(posts[index].file_url, options.folder, options.fileProgressCallback)
+      await downloadFile(posts[index].file_url, options)
       if(options.taskProgressCallback) options.taskProgressCallback(index+1, total)
-      if(options.inDownloadDelay) await new Promise(resolve => setTimeout(resolve, options.inDownloadDelay));
     }
   },
 

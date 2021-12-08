@@ -24,7 +24,8 @@
 <script lang="ts">
 import { Component } from 'vue'
 import { Vue } from 'vue-class-component'
-import Sankaku from './plugins/Sankaku/Sankaku.vue'
+import NHentai from '@/plugins/NHentai/NHentai.vue'
+import Sankaku from '@/plugins/Sankaku/Sankaku.vue'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const version = require('../package.json').version
@@ -45,6 +46,7 @@ export default class App extends Vue {
 
   created (): void {
     this.addTab()
+    this.addTab(NHentai)
   }
 
   handleTabsEdit (targetName: string, action: string): void {
@@ -54,7 +56,7 @@ export default class App extends Vue {
       this.removeTab(targetName)
     }
   }
-  addTab (component = Sankaku): void {
+  addTab (component: any = Sankaku): void {
     this.tabs.push({
       id: String(this.tabs.length + 1),
       component: component

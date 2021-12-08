@@ -6,6 +6,25 @@ const headers = {
     'User-Agent': 'Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Mobile Safari/537.36'
 }
 
+export interface DownloadOptions{
+  folder: string
+  inDownloadDelay?: number
+  taskProgressCallback?: ((downloaded_files: number, total_files: number) => void)
+  fileProgressCallback?: ((received_bytes: number, total_bytes: number) => void)
+}
+
+export function downloadString(url: string): Promise<string>{
+    return new Promise<string>( (resolve, reject) =>{
+        request.get(url, {
+            headers: headers,
+        }, (error, response, body) => {
+            if(error) reject(error)
+            else resolve(body as string);
+        }
+    );
+    });
+}
+
 export function downloadJSON<Type>(url: string): Promise<Type>{
     return new Promise<Type>( (resolve, reject) =>{
         request.get(url, {
@@ -19,7 +38,7 @@ export function downloadJSON<Type>(url: string): Promise<Type>{
     });
 }
 
-export function downloadFile(file_url: string , folder: string, progress: ((received_bytes: number, total_bytes: number) => void) | null = null) : Promise<void>{
+export function downloadFile(file_url: string, options: DownloadOptions) : Promise<void>{
     return new Promise( (resolve, reject) => {
         //extracting file name from url
         let file_name = file_url.split('/').pop() as string
@@ -35,7 +54,7 @@ export function downloadFile(file_url: string , folder: string, progress: ((rece
             headers: headers
         });
         
-        const out = fs.createWriteStream(path.join(folder, file_name));
+        const out = fs.createWriteStream(path.join(options.folder, file_name));
         req.pipe(out);
         
         req.on('response', (response) => {
@@ -47,18 +66,20 @@ export function downloadFile(file_url: string , folder: string, progress: ((rece
             // Update the received bytes
             received_bytes += chunk.length;
         
-            if(progress) progress(received_bytes, total_bytes);
+            if(options.fileProgressCallback) options.fileProgressCallback(received_bytes, total_bytes);
         });
 
         req.on('error', (err) =>{
-            reject(err)
+            throw (err)
         })
         
         req.on('end', () => {
-            if(progress != null){
-                progress(received_bytes, total_bytes);
+            if(options.fileProgressCallback) options.fileProgressCallback(received_bytes, total_bytes);
+            if(options.inDownloadDelay) {
+                new Promise(resolve2 => setTimeout(resolve2, options.inDownloadDelay)).then(() => resolve());
+            }else{
+                resolve()
             }
-            resolve()
         });
     })
     

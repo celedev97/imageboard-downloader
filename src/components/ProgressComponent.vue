@@ -6,9 +6,9 @@
       </div>
     </template>
     
-    <el-alert v-if="success != null"
-      type="success" show-icon title="Success" :closable="false"
-      :description="success"
+    <el-alert v-if="showSuccess"
+      type="success" show-icon :closable="false"
+      title="Success" description="Download Complete"
     />
 
     <el-alert v-for="error in errors" :key="error"
@@ -39,21 +39,31 @@ import { Vue } from "vue-class-component";
 export default class ProgressComponent extends Vue {
   downloadedBytes = 0
   totalBytes = 0
+
+  setFileProgress(downloaded: number, total: number): void {
+    this.downloadedBytes = downloaded;
+    this.totalBytes = total;
+  }
   get fileProgress(): number{
     return Math.trunc(this.downloadedBytes * 100 / this.totalBytes)
   }
 
   downloadedFiles = 0
   totalFiles = 0
+  setTaskProgress(downloaded: number, total: number): void {
+    this.downloadedFiles = downloaded;
+    this.totalFiles = total
+  }
   get taskProgress (): number{
     return Math.trunc(this.downloadedFiles * 100 / this.totalFiles)
   }
 
-  success: string | null = null
+  showSuccess = false
+  success(){ this.showSuccess = true }
   errors: string[] = []
 
   clear(): void{
-    this.success = null
+    this.showSuccess = false
     this.errors = []
 
     this.downloadedBytes = 0
