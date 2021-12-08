@@ -2,6 +2,10 @@
 
 This aims to be a cross-platform downloader for hentai pics and small videos.
 
+For now it supports:
+- Sankaku
+- NHentai
+
 ## Download
 
 To use the program just download the latest installer for your platform from [here](https://github.com/celedev97/hentai-downloader/releases/latest)
@@ -38,6 +42,8 @@ To build it:
 ```
 npm run electron:build
 ```
+
+<hr/>
 
 ## Built With
 
