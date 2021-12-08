@@ -7,6 +7,7 @@ module.exports = {
             nodeIntegration: true,
             builderOptions: {
                 appId: "dev.cele.hdownloader",
+                publish: ['github'],
 
                 win: {
 

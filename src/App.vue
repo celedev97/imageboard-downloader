@@ -2,7 +2,7 @@
   <div>
     <el-container>
       <el-header>
-        <h1>HDownloader</h1>
+        <h1>HDownloader v{{appVersion}}</h1>
       </el-header>
       <el-main>
 
@@ -26,6 +26,10 @@ import { Component } from 'vue'
 import { Vue } from 'vue-class-component'
 import Sankaku from './plugins/Sankaku/Sankaku.vue'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const version = require('../package.json').version
+
+
 
 interface Tab {
   id: string;
@@ -36,6 +40,8 @@ interface Tab {
 export default class App extends Vue {
   selectedTabId = '0'
   tabs = [] as Tab[]
+
+  appVersion = version
 
   created (): void {
     this.addTab()
