@@ -1,6 +1,6 @@
-# Hentai Downloader
+# Imageboard Downloader
 
-This aims to be a cross-platform downloader for hentai pics and small videos.
+This aims to be a cross-platform downloader for pics and small videos from various websites.
 
 For now it supports:
 - Sankaku
